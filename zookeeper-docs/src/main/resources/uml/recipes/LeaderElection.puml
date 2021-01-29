@@ -1,0 +1,40 @@
+@startuml
+
+title: Zookeeper Leader Election
+
+actor clientA as c1 #red
+entity Zookeeper as s1 #yellow
+actor clientB as c2 #red
+actor clientC as c3 #red
+
+s1 -> s1 : 创建节点(持久节点/election)
+c1 -> s1 : 创建对应节点(临时顺序节点)
+s1 --> c1 : 返回节点引用(/election/node_0000001)
+
+c2 -> s1 : 创建对应节点(临时顺序节点)
+s1 --> c2 : 返回节点引用(/election/node_0000000)
+
+c3 -> s1 : 创建对应节点(临时顺序节点)
+s1 --> c3 : 返回节点引用(/election/node_0000002)
+
+=== 所有客户端异步创建节点参与选举 ==
+
+s1 -> s1: 对比所有参与选举节点的顺序号
+s1 --> c2: 最小节点作为leader
+c1 --> c2: 作为c2节点的follower节点
+c3 --> c2: 作为c2节点的follower节点
+c1 -> c2: 设置exists监视器
+c2 --> c1:返回对应watcher对象
+c3 -> c1: 设置exists监视器
+c1 --> c3: 返回对应watcher对象
+
+=== 选举主节点 ==
+
+c2 ->X s1 : 断开连接
+s1 -> c1: 收到Zookeeper推送c2节点的exists事件
+s1 -> s1: 对比所有参与选举节点的顺序号
+s1 --> c1: 最小节点作为leader
+c3 -> c1: 作为c1节点的follower节点
+
+
+@enduml

@@ -41,6 +41,8 @@ import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
  * processors: PrepRequestProcessor -&gt; ProposalRequestProcessor -&gt;
  * CommitProcessor -&gt; Leader.ToBeAppliedRequestProcessor -&gt;
  * FinalRequestProcessor
+ *
+ * 与标准的{@link org.apache.zookeeper.server.ZooKeeperServer}一样，只是替换了其中的请求处理器
  */
 public class LeaderZooKeeperServer extends QuorumZooKeeperServer {
 

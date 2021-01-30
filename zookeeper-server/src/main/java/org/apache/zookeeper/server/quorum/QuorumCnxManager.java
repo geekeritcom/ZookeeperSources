@@ -916,6 +916,8 @@ public class QuorumCnxManager {
 
     /**
      * Thread to listen on some ports
+     * <p>
+     * 用于监听端口的线程
      */
     public class Listener extends ZooKeeperThread {
 
@@ -964,21 +966,25 @@ public class QuorumCnxManager {
             if (!shutdown) {
                 LOG.debug("Listener thread started, myId: {}", self.getId());
                 Set<InetSocketAddress> addresses;
-
+                // 确定是否监听所有IP的两个端口（广播端口以及快速leader选举 ）
                 if (self.getQuorumListenOnAllIPs()) {
+                    // 使用通配地址
                     addresses = self.getElectionAddress().getWildcardAddresses();
                 } else {
+                    // 使用确定的服务器地址
                     addresses = self.getElectionAddress().getAllAddresses();
                 }
 
                 CountDownLatch latch = new CountDownLatch(addresses.size());
-                listenerHandlers = addresses.stream().map(address ->
-                        new ListenerHandler(address, self.shouldUsePortUnification(), self.isSslQuorum(), latch))
+                // 为每个地址创建一个监听处理器实例
+                listenerHandlers = addresses.stream()
+                        .map(address ->
+                                new ListenerHandler(address, self.shouldUsePortUnification(), self.isSslQuorum(), latch))
                         .collect(Collectors.toList());
 
                 ExecutorService executor = Executors.newFixedThreadPool(addresses.size());
+                // 将每个的监听处理器都提交到线程池处理
                 listenerHandlers.forEach(executor::submit);
-
                 try {
                     latch.await();
                 } catch (InterruptedException ie) {
@@ -1078,14 +1084,16 @@ public class QuorumCnxManager {
             private void acceptConnections() {
                 int numRetries = 0;
                 Socket client = null;
-
+                // 默认尝试绑定到指定端口的重试次数为3次，指定重试次数为0时表示会不断进行重试
                 while ((!shutdown) && (portBindMaxRetry == 0 || numRetries < portBindMaxRetry)) {
                     try {
+                        // 创建对应地址的socket连接
                         serverSocket = createNewServerSocket();
                         LOG.info("{} is accepting connections now, my election bind port: {}", QuorumCnxManager.this.mySid, address.toString());
                         while (!shutdown) {
                             try {
                                 client = serverSocket.accept();
+                                // 设置连接选项
                                 setSockOpts(client);
                                 LOG.info("Received connection request from {}", client.getRemoteSocketAddress());
                                 // Receive and handle the connection request
@@ -1093,6 +1101,8 @@ public class QuorumCnxManager {
                                 // enabled. This is required because sasl server
                                 // authentication process may take few seconds to finish,
                                 // this may delay next peer connection requests.
+                                // 当连接启用sasl选项时，需要异步处理来自客户端的连接，因为
+                                // sasl服务端验证可能需要一段时间才能结束，这可能会延迟来自下一个服务器的连接请求
                                 if (quorumSaslAuthEnabled) {
                                     receiveConnectionAsync(client);
                                 } else {
@@ -1115,7 +1125,7 @@ public class QuorumCnxManager {
                         if (e instanceof SocketException) {
                             socketException.set(true);
                         }
-
+                        // 连接失败的情况下累计重试次数
                         numRetries++;
                         try {
                             close();

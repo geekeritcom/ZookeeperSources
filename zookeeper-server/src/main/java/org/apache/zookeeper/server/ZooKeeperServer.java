@@ -514,7 +514,7 @@ public class ZooKeeperServer implements SessionExpirer, ServerStats.Provider {
                 deadSessions.add(session);
             }
         }
-
+        // 将本地数据库中所有的已经失效的会话移除
         for (long session : deadSessions) {
             // TODO: Is lastProcessedZxid really the best thing to use?
             killSession(session, zkDb.getDataTreeLastProcessedZxid());

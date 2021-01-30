@@ -219,12 +219,15 @@ public class Learner {
 
     /**
      * Returns the address of the node we think is the leader.
+     *
+     * 查询当前节点认为的leader的地址
      */
     protected QuorumServer findLeader() {
         QuorumServer leaderServer = null;
         // Find the leader by id
         Vote current = self.getCurrentVote();
         for (QuorumServer s : self.getView().values()) {
+            // 从当前集群成员中找出当前节点认为的leader节点
             if (s.id == current.getId()) {
                 // Ensure we have the leader's correct IP address before
                 // attempting to connect.
@@ -259,6 +262,8 @@ public class Learner {
      * Establish a connection with the LearnerMaster found by findLearnerMaster.
      * Followers only connect to Leaders, Observers can connect to any active LearnerMaster.
      * Retries until either initLimit time has elapsed or 5 tries have happened.
+     *
+     *
      * @param multiAddr - the address of the Peer to connect to.
      * @throws IOException - if the socket connection fails on the 5th attempt
      * if there is an authentication failure while connecting to leader

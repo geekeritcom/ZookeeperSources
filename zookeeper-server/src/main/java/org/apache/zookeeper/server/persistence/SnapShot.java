@@ -42,6 +42,9 @@ public interface SnapShot {
 
     /**
      * persist the datatree and the sessions into a persistence storage
+     *
+     * 序列化并持久化存储数据树以及所有会话
+     *
      * @param dt the datatree to be serialized
      * @param sessions the session timeouts to be serialized
      * @param name the object name to store snapshot into

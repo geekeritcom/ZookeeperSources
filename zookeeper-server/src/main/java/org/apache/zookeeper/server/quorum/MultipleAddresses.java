@@ -189,6 +189,8 @@ public final class MultipleAddresses {
      * Performs a parallel DNS lookup for all addresses.
      *
      * If the DNS lookup fails, then address remain unmodified.
+     *
+     * 对所有地址进行并行的DNS查询，当DNS查询失败时，地址保持不变
      */
     public void recreateSocketAddresses() {
         addresses = addresses.parallelStream()

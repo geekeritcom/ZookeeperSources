@@ -293,7 +293,7 @@ public class Leader extends LearnerMaster {
         } else {
             addresses = self.getQuorumAddress().getAllAddresses();
         }
-
+        // 针对集群中的每个地址创建socket连接
         addresses.stream()
                 .map(address -> createServerSocket(address, self.shouldUsePortUnification(), self.isSslQuorum()))
                 .filter(Optional::isPresent)
@@ -452,7 +452,7 @@ public class Leader extends LearnerMaster {
             if (!stop.get() && !serverSockets.isEmpty()) {
                 ExecutorService executor = Executors.newFixedThreadPool(serverSockets.size());
                 CountDownLatch latch = new CountDownLatch(serverSockets.size());
-
+                // 将所有与其他节点的连接工作提交到线程池中
                 serverSockets.forEach(serverSocket ->
                         executor.submit(new LearnerCnxAcceptorHandler(serverSocket, latch)));
 
@@ -515,6 +515,7 @@ public class Leader extends LearnerMaster {
 
                     // start with the initLimit, once the ack is processed
                     // in LearnerHandler switch to the syncLimit
+                    // 其他节点与主节点建立连接的超时时间为initLimit*tickTime
                     socket.setSoTimeout(self.tickTime * self.initLimit);
                     socket.setTcpNoDelay(nodelay);
 
@@ -598,6 +599,7 @@ public class Leader extends LearnerMaster {
             // Start thread that waits for connection requests from
             // new followers.
             cnxAcceptor = new LearnerCnxAcceptor();
+            // 启动线程等待来自新的follower的连接请求
             cnxAcceptor.start();
 
             long epoch = getEpochToPropose(self.getId(), self.getAcceptedEpoch());

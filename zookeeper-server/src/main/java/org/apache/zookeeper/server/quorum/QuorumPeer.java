@@ -1359,7 +1359,6 @@ public class QuorumPeer extends ZooKeeperThread implements QuorumStats.Provider 
         updateThreadName();
 
         LOG.debug("Starting quorum peer");
-        // 注册JMX
         try {
             jmxQuorumBean = new QuorumBean(this);
             MBeanRegistry.getInstance().register(jmxQuorumBean, null);

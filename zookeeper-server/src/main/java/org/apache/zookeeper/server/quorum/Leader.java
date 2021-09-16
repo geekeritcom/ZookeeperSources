@@ -452,11 +452,12 @@ public class Leader extends LearnerMaster {
             if (!stop.get() && !serverSockets.isEmpty()) {
                 ExecutorService executor = Executors.newFixedThreadPool(serverSockets.size());
                 CountDownLatch latch = new CountDownLatch(serverSockets.size());
-                // 将所有与其他节点的连接工作提交到线程池中
+                // 将所有与其他节点的连接工作提交到线程池中，每个节点的网络连接使用独立的线程组件LearnerCnxAcceptorHandler进行处理
                 serverSockets.forEach(serverSocket ->
                         executor.submit(new LearnerCnxAcceptorHandler(serverSocket, latch)));
 
                 try {
+                    // 等待与其他所有节点连接建立完成
                     latch.await();
                 } catch (InterruptedException ie) {
                     LOG.error("Interrupted while sleeping in LearnerCnxAcceptor.", ie);
@@ -492,7 +493,7 @@ public class Leader extends LearnerMaster {
             public void run() {
                 try {
                     Thread.currentThread().setName("LearnerCnxAcceptorHandler-" + serverSocket.getLocalSocketAddress());
-
+                    // 尝试建立与其他节点的连接
                     while (!stop.get()) {
                         acceptConnections();
                     }
@@ -580,6 +581,7 @@ public class Leader extends LearnerMaster {
      */
     void lead() throws IOException, InterruptedException {
         self.end_fle = Time.currentElapsedTime();
+        // 计算选举耗时
         long electionTimeTaken = self.end_fle - self.start_fle;
         self.setElectionTimeTaken(electionTimeTaken);
         ServerMetrics.getMetrics().ELECTION_TIME.add(electionTimeTaken);

@@ -18,22 +18,13 @@
 
 package org.apache.zookeeper.server.quorum;
 
-import java.io.IOException;
-import javax.management.JMException;
-import javax.security.sasl.SaslException;
-
 import org.apache.yetus.audience.InterfaceAudience;
 import org.apache.zookeeper.audit.ZKAuditProvider;
 import org.apache.zookeeper.jmx.ManagedUtil;
 import org.apache.zookeeper.metrics.MetricsProvider;
 import org.apache.zookeeper.metrics.MetricsProviderLifeCycleException;
 import org.apache.zookeeper.metrics.impl.MetricsProviderBootstrap;
-import org.apache.zookeeper.server.DatadirCleanupManager;
-import org.apache.zookeeper.server.ExitCode;
-import org.apache.zookeeper.server.ServerCnxnFactory;
-import org.apache.zookeeper.server.ServerMetrics;
-import org.apache.zookeeper.server.ZKDatabase;
-import org.apache.zookeeper.server.ZooKeeperServerMain;
+import org.apache.zookeeper.server.*;
 import org.apache.zookeeper.server.admin.AdminServer.AdminServerException;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog;
 import org.apache.zookeeper.server.persistence.FileTxnSnapLog.DatadirException;
@@ -42,6 +33,10 @@ import org.apache.zookeeper.server.util.JvmPauseMonitor;
 import org.apache.zookeeper.util.ServiceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.management.JMException;
+import javax.security.sasl.SaslException;
+import java.io.IOException;
 
 /**
  * <h2>Configuration file</h2>
@@ -143,7 +138,6 @@ public class QuorumPeerMain {
     }
 
     /**
-     * 以集群模式启动
      *
      * @param config 从配置文件中解析的配置
      * @throws IOException
@@ -151,7 +145,6 @@ public class QuorumPeerMain {
      */
     public void runFromConfig(QuorumPeerConfig config) throws IOException, AdminServerException {
         try {
-            // 注册日志
             ManagedUtil.registerLog4jMBeans();
         } catch (JMException e) {
             LOG.warn("Unable to register log4j JMX control", e);
@@ -167,7 +160,6 @@ public class QuorumPeerMain {
             throw new IOException("Cannot boot MetricsProvider " + config.getMetricsProviderClassName(), error);
         }
         try {
-            // 初始化服务端度量器
             ServerMetrics.metricsProviderInitialized(metricsProvider);
             ServerCnxnFactory cnxnFactory = null;
             ServerCnxnFactory secureCnxnFactory = null;
@@ -234,7 +226,7 @@ public class QuorumPeerMain {
             if (config.jvmPauseMonitorToRun) {
                 quorumPeer.setJvmPauseMonitor(new JvmPauseMonitor(config));
             }
-            // 启动quorum，非常重要！
+            // 启动当前节点
             quorumPeer.start();
             ZKAuditProvider.addZKStartStopAuditLog();
             quorumPeer.join();

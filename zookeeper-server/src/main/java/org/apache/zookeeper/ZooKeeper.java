@@ -1015,9 +1015,13 @@ public class ZooKeeper implements AutoCloseable {
         this.clientConfig = clientConfig;
         watchManager = defaultWatchManager();
         watchManager.defaultWatcher = watcher;
+
+        // 解析连接配置
         ConnectStringParser connectStringParser = new ConnectStringParser(connectString);
+        // 基于hostProvider从服务器列表中选出一台机器进行连接，写请求会被转发给leader节点来保证写入的顺序一致性
         hostProvider = aHostProvider;
 
+        // 创建客户端与服务器进行通信的组件
         cnxn = createConnection(
             connectStringParser.getChrootPath(),
             hostProvider,

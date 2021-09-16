@@ -647,6 +647,8 @@ public class QuorumCnxManager {
         // do authenticating learner
         authServer.authenticate(sock, din);
         //If wins the challenge, then close the new connection.
+
+        // 当收到的节点的ID小于当前的节点ID时，关闭Socket
         if (sid < self.getId()) {
             /*
              * This replica might still believe that the connection to sid is

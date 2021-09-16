@@ -965,7 +965,7 @@ public class FastLeaderElection implements Election {
              * The current participant uses recvset to deduce on whether a majority
              * of participants has voted for it.
              *
-             * 存储本次leader选举的投票结果，当前节点使用该容器来判断是否大部分节点投票给自己
+             * 存储本次leader选举的投票结果，当前节点使用该容器来判断是否大部分节点投票给自己？？？
              */
             Map<Long, Vote> recvset = new HashMap<Long, Vote>();
 
@@ -1014,11 +1014,11 @@ public class FastLeaderElection implements Election {
                  */
 
                 if (n == null) {
-                    // 当所有通知消息发送完成后，继续发送新的通知消息
+                    // 建立连接之后需要向对等节点发送投票
                     if (manager.haveDelivered()) {
                         sendNotifications();
                     } else {
-                        // 未发送完成时继续发送
+                        // 与其他节点建立连接
                         manager.connectAll();
                     }
 
@@ -1044,6 +1044,7 @@ public class FastLeaderElection implements Election {
                                 break;
                             }
                             // If notification > current, replace and send messages out
+                            // 对等节点发来的投票周期大于当前节点，更新本地的投票周期后重新发送投票信息
                             if (n.electionEpoch > logicalclock.get()) {
                                 logicalclock.set(n.electionEpoch);
                                 recvset.clear();
@@ -1053,6 +1054,7 @@ public class FastLeaderElection implements Election {
                                     updateProposal(getInitId(), getInitLastLoggedZxid(), getPeerEpoch());
                                 }
                                 sendNotifications();
+                            // 对等节点发来的投票周期小于当前节点时直接忽略
                             } else if (n.electionEpoch < logicalclock.get()) {
                                 LOG.debug(
                                         "Notification election epoch is smaller than logicalclock. n.electionEpoch = 0x{}, logicalclock=0x{}",
@@ -1060,6 +1062,7 @@ public class FastLeaderElection implements Election {
                                         Long.toHexString(logicalclock.get()));
                                 break;
                             } else if (totalOrderPredicate(n.leader, n.zxid, n.peerEpoch, proposedLeader, proposedZxid, proposedEpoch)) {
+                                // 根据节点发来的投票信息更新自己的投票后重新发送出去
                                 updateProposal(n.leader, n.zxid, n.peerEpoch);
                                 sendNotifications();
                             }
@@ -1072,13 +1075,16 @@ public class FastLeaderElection implements Election {
                                     Long.toHexString(n.electionEpoch));
 
                             // don't care about the version if it's in LOOKING state
+                            // 对接收到的选票信息进行归档
                             recvset.put(n.sid, new Vote(n.leader, n.zxid, n.electionEpoch, n.peerEpoch));
 
                             voteSet = getVoteTracker(recvset, new Vote(proposedLeader, proposedZxid, logicalclock.get(), proposedEpoch));
 
+                            // 这里确认是否已经得到了大部分节点的投票
                             if (voteSet.hasAllQuorums()) {
 
                                 // Verify if there is any change in the proposed leader
+                                // 如果在确认收到大多数投票期间收到其他节点的新的投票并且投票结果更新，则退出更新当前节点
                                 while ((n = recvqueue.poll(finalizeWait, TimeUnit.MILLISECONDS)) != null) {
                                     if (totalOrderPredicate(n.leader, n.zxid, n.peerEpoch, proposedLeader, proposedZxid, proposedEpoch)) {
                                         recvqueue.put(n);
@@ -1090,6 +1096,7 @@ public class FastLeaderElection implements Election {
                                  * This predicate is true once we don't read any new
                                  * relevant message from the reception queue
                                  */
+                                // 更新本地节点的状态
                                 if (n == null) {
                                     setPeerState(proposedLeader, voteSet);
                                     Vote endVote = new Vote(proposedLeader, proposedZxid, logicalclock.get(), proposedEpoch);

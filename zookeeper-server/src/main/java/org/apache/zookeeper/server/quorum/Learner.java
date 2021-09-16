@@ -307,6 +307,7 @@ public class Learner {
 
         self.authLearner.authenticate(sock, hostname);
 
+        // 为双方交互准备输入输出缓冲流
         leaderIs = BinaryInputArchive.getArchive(new BufferedInputStream(sock.getInputStream()));
         bufferedOutput = new BufferedOutputStream(sock.getOutputStream());
         leaderOs = BinaryOutputArchive.getArchive(bufferedOutput);
@@ -350,6 +351,7 @@ public class Learner {
             Socket sock = createSocket();
 
             // leader connection timeout defaults to tickTime * initLimit
+            // 设置向leader发出连接的超时时间
             int connectTimeout = self.tickTime * self.initLimit;
 
             // but if connectToLearnerMasterLimit is specified, use that value to calculate
@@ -361,6 +363,7 @@ public class Learner {
             int remainingTimeout;
             long startNanoTime = nanoTime();
 
+            // 默认重试5次
             for (int tries = 0; tries < 5 && socket.get() == null; tries++) {
                 try {
                     // recalculate the init limit time because retries sleep for 1000 milliseconds
